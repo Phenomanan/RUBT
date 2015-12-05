@@ -71,7 +71,7 @@ class Downloader extends Thread {
 			}
 			x++;
 			if (RUBTClient.pieces[RUBTClient.pieces.length - 1] == 2 && !retry) {
-				if((RUBTClient.remaining <= 0)
+				if((RUBTClient.remaining <= 0))
 					break;
 				System.out.println("All pieces requested; must wait, then re-request.");
 				retry = true;
@@ -86,6 +86,7 @@ class Downloader extends Thread {
 		RUBTClient.decrementActiveThreads();//this might not work EDIT-FLAG
 		System.out.print("Thread finished. Threads active: "+RUBTClient.numActiveThreads);
 		System.out.println(" Pieces left: "+RUBTClient.remaining);
+		return;
 	}
 
 	/**
@@ -184,6 +185,7 @@ class Downloader extends Thread {
 			}
 			/* System.out.println("Peer Response: " + peerLine[0]); */
 
+			x = 0;
 			if (peerLine[0] >= 0) {
 				temp2[0] = peerLine[0];
 				temp2[1] = peerInput.readByte();
@@ -368,6 +370,8 @@ class Uploader extends Thread {
 
 	public void run() {
 
+
+		return;
 	}
 }
 
@@ -494,9 +498,10 @@ public class RUBTClient {
 		}
 
 		x = pieces.length - remaining;
-		System.out.println("Finish: Downloaded: " + x + " / " + pieces.length);
+		System.out.println("Finished: Downloaded: " + x + " / " + pieces.length);
 		System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
-
+		System.out.println();
+		return;
 	}
 
 	/*
