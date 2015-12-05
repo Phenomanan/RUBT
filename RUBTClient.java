@@ -71,7 +71,7 @@ class Downloader extends Thread {
 			}
 			x++;
 			if (RUBTClient.pieces[RUBTClient.pieces.length - 1] == 2 && !retry) {
-				if((RUBTClient.remaining <= 0)
+				if((RUBTClient.remaining <= 0))
 					break;
 				System.out.println("All pieces requested; must wait, then re-request.");
 				retry = true;
@@ -727,7 +727,7 @@ public class RUBTClient {
 	 * @throws BencodingException
 	 * @author Mehul, Manan, Chris
 	 */
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "rawtypes", "unused", "deprecation" })
 	public static void download(TorrentInfo info) throws IOException, BencodingException {
 		URL link, link2;
 		HttpURLConnection conn;
@@ -832,13 +832,15 @@ public class RUBTClient {
 	
 		numActiveThreads = 0; // initialize
 
+		Downloader[] threads = new Downloader[p_list.size()]; // Store the threads!
 		for(int i = 0; i < p_list.size(); i++) {
 			// CREATE THREAD TO DOWNLOAD
 			Downloader d = new Downloader(p_list.get(i), info, b);
 			numActiveThreads++; // One active right now
 			downloads.add(d);
 			d.start(); // Run the thread and download the Rick Roll
-
+			threads[i] = d; // Add em to list
+			
 			if (numActiveThreads <= 0){
 				System.out.println("Error: no active threads");
 				return;
@@ -864,6 +866,14 @@ public class RUBTClient {
 			}
            // System.out.println("In While. numActiveThreads = " + numActiveThreads);
         } // FLAG loop
+        
+        for(int i = 0; i < p_list.size(); i++){
+        	if(threads[i].isAlive()){
+        		threads[i].stop();
+        		numActiveThreads--;
+        	}
+        }
+        
         System.out.println("Out of main loop; NumActiveThreads: " + numActiveThreads); // Flag
         return;
 
