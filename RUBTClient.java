@@ -496,6 +496,7 @@ public class RUBTClient {
 		while (pieceList.size() > 0) {
 			sfile_stream.write((byte[]) pieceList.remove(0));
 		}
+		sfile_stream.close();
 
 		x = pieces.length - remaining;
 		System.out.println("Finished: Downloaded: " + x + " / " + pieces.length);
