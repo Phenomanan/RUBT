@@ -55,7 +55,6 @@ class Downloader extends Thread {
 		this.info = info;
 		this.b = b;
 		this.available = new BitSet(RUBTClient.pieces.length); // The size of
-										// one piece
 		this.available.clear();
 	}
 
@@ -371,18 +370,31 @@ class Downloader extends Thread {
 class Uploader extends Thread {
 	@SuppressWarnings("unused")
 	private Peer peer;
+	private TorrentInfo info;
+	byte[] b;
 
 	// Constructor takes in a peer that wants to upload
-	public Uploader(Peer peer) {
+	public Uploader(Peer peer, TorrentInfo info, byte[] b) {
 		this.peer = peer;
+		this.info = info;
+		this.b = b;
 	}
 
 	public void run() {
-
-
+		System.out.println("Uploading to peer: "+peer.peerID);
+		try{
+			upload();
+		} catch(IOException e){
+			System.out.println("Upload failed");
+		}
 		return;
 	}
+
+	public void upload() throws IOException{
+
+	}
 }
+
 
 /**
  * A convenience class for testing so that we can access the message_type of the
@@ -550,6 +562,7 @@ public class RUBTClient {
 		System.out.println("Finished: Downloaded: " + x + " / " + pieces.length);
 		System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
 		System.out.println();
+		System.exit(0);
 		return;
 	}
 
