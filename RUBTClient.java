@@ -4,11 +4,13 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.io.*;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.HashMap;
 import java.util.BitSet;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.io.Console;
 
 import GivenTools.*;
 
@@ -52,7 +54,8 @@ class Downloader extends Thread {
 		this.peer = peer;
 		this.info = info;
 		this.b = b;
-        this.available = new BitSet(RUBTClient.pieces.length); // The size of one piece
+		this.available = new BitSet(RUBTClient.pieces.length); // The size of
+										// one piece
 		this.available.clear();
 	}
 
@@ -66,12 +69,12 @@ class Downloader extends Thread {
 				download();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
-				System.out.println("Thread download failed."+e1); // FLAG
-				//e1.printStackTrace();
+				System.out.println("Thread download failed." + e1); // FLAG
+				// e1.printStackTrace();
 			}
 			x++;
 			if (RUBTClient.pieces[RUBTClient.pieces.length - 1] == 2 && !retry) {
-				if((RUBTClient.remaining <= 0))
+				if ((RUBTClient.remaining <= 0))
 					break;
 				System.out.println("All pieces requested; must wait, then re-request.");
 				retry = true;
@@ -83,9 +86,9 @@ class Downloader extends Thread {
 			}
 		}
 
-		RUBTClient.decrementActiveThreads();//this might not work EDIT-FLAG
-		System.out.print("Thread finished. Threads active: "+RUBTClient.numActiveThreads);
-		System.out.println(" Pieces left: "+RUBTClient.remaining);
+		RUBTClient.decrementActiveThreads();// this might not work EDIT-FLAG
+		System.out.print("Thread finished. Threads active: " + RUBTClient.numActiveThreads);
+		System.out.println(" Pieces left: " + RUBTClient.remaining);
 	}
 
 	/**
@@ -232,16 +235,17 @@ class Downloader extends Thread {
 					requesting = true;
 				}
 
-				if(message=="bitfield"){
+				if (message == "bitfield") {
 					setBitField(peerLine); // FLAG
 				}
 
-				if(message=="have"){//we set the corresponding bit to true in the bitfield
-		            temp2[0] = peerLine[1];
-		            temp2[1] = peerLine[2];
-		            temp2[2] = peerLine[3];
-		            temp2[3] = peerLine[4];
-		            x = RUBTClient.parseHex(temp2);
+				if (message == "have") {// we set the corresponding bit to true
+										// in the bitfield
+					temp2[0] = peerLine[1];
+					temp2[1] = peerLine[2];
+					temp2[2] = peerLine[3];
+					temp2[3] = peerLine[4];
+					x = RUBTClient.parseHex(temp2);
 					available.set(x);
 				}
 			}
@@ -329,24 +333,23 @@ class Downloader extends Thread {
 	}
 
 	/**
-	 * @author Mehul
-	 * This method just takes in a bitfield message,
-	 *  and updates the downloader's available list accordingly
-	 * We have to keep in mind that the BitSet always increments by 64,
-	 *  and that the bitfield from the message could have extra trailing bits.
+	 * @author Mehul This method just takes in a bitfield message, and updates
+	 *         the downloader's available list accordingly We have to keep in
+	 *         mind that the BitSet always increments by 64, and that the
+	 *         bitfield from the message could have extra trailing bits.
 	 */
-	public void setBitField(byte[] input){
+	public void setBitField(byte[] input) {
 		int x, y, z, temp;
 
 		z = 0;
-		//the first byte of the array is the message code
-		for(x=1; x<input.length; x++)
-			for(y=7; y>=0; y--){
-				if(z >= RUBTClient.pieces.length)
+		// the first byte of the array is the message code
+		for (x = 1; x < input.length; x++)
+			for (y = 7; y >= 0; y--) {
+				if (z >= RUBTClient.pieces.length)
 					return;
 				temp = ((input[x]) >> y) & 1;
-			//	System.out.println(z+": "+temp);
-				this.available.set(z, temp==1);
+				// System.out.println(z+": "+temp);
+				this.available.set(z, temp == 1);
 				z++;
 			}
 		return;
@@ -390,6 +393,67 @@ class Message {
 
 public class RUBTClient {
 
+	/**
+	 * static class that runs along side the client waiting for a user input at
+	 * any time. If the user enters "1" then the program will terminate.
+	 * if the user enters 2 the program will pause
+	 * @author Chris
+	 *
+	 */
+	static class Terminator implements Runnable {
+		Scanner inputReader = new Scanner(System.in);
+		public Terminator(){
+			
+		}
+		@SuppressWarnings("deprecation")
+		public void run() {
+			while(true){
+				String input = inputReader.next();
+				if(input.equals("1")){
+					System.out.println("Program terminated by user input");
+					System.exit(0);
+				}
+				else if(input.equals("2")){ // Pause every thread
+					for(int i = 0; i < RUBTClient.dThreads.length; i++){
+						if(dThreads[i].isAlive()) dThreads[i].suspend();
+					}
+					
+					/*for(int i = 0; i < RUBTClient.uThreads.length; i++){
+						if(uThreads[i].isAlive()) uThreads[i].suspend();
+					}*/
+					System.out.println("Program paused. Press 1 to quit, 2 to resume.");
+					while(true){
+						String input2 = inputReader.next();
+						if(input2.equals("1")){ // quit
+							System.out.println("Program terminated by user input");
+							System.exit(0);
+						}
+						else if(input2.equals("2")){ // unpause
+							for(int i = 0; i < RUBTClient.dThreads.length; i++){
+								if(dThreads[i].isAlive())
+									dThreads[i].resume();
+							}
+							
+							/*for(int i = 0; i < RUBTClient.uThreads.length; i++){
+								if(uThreads[i].isAlive())
+									uThreads[i].resume();
+							}*/
+							break; // Get out of pause loop
+						}
+						else{
+							System.out.println("That is not a valid input. Input 1 to quit, 2 to unpause.");
+						}
+					}
+				}
+				else{
+					System.out.println("That is not a valid input. Input 1 to quit, 2 to pause.");
+				}
+				
+			}
+
+		}
+
+	}
 	// these global variables are for convenience when sending the messages to
 	// the peer
 
@@ -414,7 +478,11 @@ public class RUBTClient {
 	public static int remaining;
 	@SuppressWarnings("rawtypes")
 	public static ArrayList pieceList;
-	public static int numActiveThreads; // Tracks how many threads are still alive
+	public static int numActiveThreads; // Tracks how many threads are still
+										// alive
+	// Store all uploader and downloader threads
+	protected static Downloader[] dThreads;
+	protected static Uploader[] uThreads;
 
 	/**
 	 *
@@ -424,14 +492,26 @@ public class RUBTClient {
 	 * @throws IOException
 	 * @author Mehul, Manan
 	 */
-	public static void main(String[] args) throws BencodingException, IOException {
+	public static void main(String[] args) throws BencodingException, IOException, InterruptedException {
 
 		if (args.length != 2) {
 			System.out.println("RUBTClient requires two arguments: <.torrent file, .mov file name");
 		}
 		String tfilename = args[0];
 		String sfilename = args[1];
-
+		
+		System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time");
+		Thread.sleep(5000);
+		
+		
+		//******************//
+		//the next three lines of code should wait for a user input while the rest of the program is running
+		Terminator terminator = new Terminator();
+		Thread t = new Thread(terminator);
+		t.start();
+		numActiveThreads++;
+		//*****************//
+		
 		long numbytes;
 		byte[] tfilebytes;
 		int x;
@@ -497,6 +577,7 @@ public class RUBTClient {
 		System.out.println("Finish: Downloaded: " + x + " / " + pieces.length);
 		System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
 
+		System.exit(0); // Exit program, because download is complete
 	}
 
 	/*
@@ -824,28 +905,30 @@ public class RUBTClient {
 		// System.out.println("Peer Connection: port:" + peer.port + " address:"
 		// + peer.IP +
 		// " peer id:" + peer.peerID.toString());
-		
-		
-		//************************************************************************************************
-			//downloads is a global array list that keeps a list of all the connections being maintained.
-			//below is a loop that takes the array list of all the peers and establishes a connection with them. 
-	
+
+		// ************************************************************************************************
+		// downloads is a global array list that keeps a list of all the
+		// connections being maintained.
+		// below is a loop that takes the array list of all the peers and
+		// establishes a connection with them.
+
 		numActiveThreads = 0; // initialize
 
-		Downloader[] threads = new Downloader[p_list.size()]; // Store the threads!
-		for(int i = 0; i < p_list.size(); i++) {
-			// CREATE THREAD TO DOWNLOAD
+		dThreads = new Downloader[p_list.size()]; // Store the threads!
+		
+		for (int i = 0; i < p_list.size(); i++) {
+			// CREATE THREAD TO DOWNLOAD, AND MAKE UPLOADERS NEXT
 			Downloader d = new Downloader(p_list.get(i), info, b);
 			numActiveThreads++; // One active right now
 			downloads.add(d);
 			d.start(); // Run the thread and download the Rick Roll
-			threads[i] = d; // Add em to list
-			
-			if (numActiveThreads <= 0){
+			dThreads[i] = d; // Add em to list
+
+			if (numActiveThreads <= 0) {
 				System.out.println("Error: no active threads");
 				return;
 			}
-			if (!d.isAlive()){
+			if (!d.isAlive()) {
 				System.out.println("one of tbe downloads dropped");
 				break;
 			}
@@ -855,29 +938,33 @@ public class RUBTClient {
 			// System.out.println("LEFT WHILE LOOP"); // fLAGG
 		}
 
-		//We need a while-loop here that runs until all the threads stop
+		// We need a while-loop here that runs until all the threads stop
 		long checkpoint = System.currentTimeMillis();
-        while(numActiveThreads >= 1){
-            if(numActiveThreads <= 0) break;
-			if(remaining <= 0) break;
-			if((System.currentTimeMillis() - checkpoint) >= 30000){
+		while (numActiveThreads >= 1) {
+			if (numActiveThreads <= 0)
+				break;
+			if (remaining <= 0)
+				break;
+			if ((System.currentTimeMillis() - checkpoint) >= 120000) {
 				System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
 				checkpoint = System.currentTimeMillis();
 			}
-           // System.out.println("In While. numActiveThreads = " + numActiveThreads);
-        } // FLAG loop
-        
-        for(int i = 0; i < p_list.size(); i++){
-        	if(threads[i].isAlive()){
-        		threads[i].stop();
-        		numActiveThreads--;
-        	}
-        }
-        
-        System.out.println("Out of main loop; NumActiveThreads: " + numActiveThreads); // Flag
-        return;
+			// System.out.println("In While. numActiveThreads = " +
+			// numActiveThreads);
+		} 
+		// FLAG loop
 
-	}//END OF download()
+		for (int i = 0; i < p_list.size(); i++) {
+			if (dThreads[i].isAlive()) {
+				dThreads[i].stop();
+				numActiveThreads--;
+			}
+		}
+
+		System.out.println("Out of main loop; NumActiveThreads: " + numActiveThreads); // Flag
+		return;
+
+	}// END OF download()
 
 	/*
 	 * This method takes the piece sent by the peer and adds it to the file. If
@@ -1273,5 +1360,6 @@ public class RUBTClient {
 		// System.out.println("Number of Active Threads: " + numActiveThreads);
 		// // FLAG
 	}
+
 
 }
