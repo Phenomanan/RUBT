@@ -390,10 +390,131 @@ class Uploader extends Thread {
 		return;
 	}
 
+	/*
+	 * @author Mehul
+	 *  This method uploads to the specified peer.
+	 */
 	public void upload() throws IOException{
+		Socket peerSocket; // Socket connecting to peer
+		String message; // Holds received/sent messages
+		int x;
+		final ReentrantLock lock = new ReentrantLock();
 
+		try {
+			peerSocket = new Socket(peer.IP, peer.port); // Set peer socket
+		} catch (IOException e) {
+			System.out.println("Could not instantiate peer socket.");
+			throw e; // Throw the exception because program should not continue
+			// if cannot connect
+		}
+
+		// System.out.println("Peer socket successfully connected."); // Flag
+		DataInputStream peerInput = null;
+		DataOutputStream peerOutput = null;
+		try {
+
+			peerInput = new DataInputStream(peerSocket.getInputStream()); // Open
+			// inputstream
+			peerOutput = new DataOutputStream(peerSocket.getOutputStream()); // Open
+			// outputstream
+
+		} catch (IOException e) {
+			System.err.println("there was a problem opening up the streams");
+		}
+
+		// System.out.println("Input/Output streams successfully opened."); //
+		// Flag
+
+		byte[] peerLine; // Will be used for handshake and message
+		peerLine = RUBTClient.handshake(info.info_hash.array(), b); // Set it to
+																	// equal the
+		// handshake
+		try {
+			peerOutput.write(peerLine); // Send handshake to peer
+			peerInput.read(peerLine); // Receive handshake
+		} catch (IOException e) {
+			System.err.println("problem reading or writing to the peer");
+		}
+
+		// peerSocket.setSoTimeout(10000);
+		String response_SHA = new String(peerLine).substring(28, 48);
+		String our_SHA = new String(info.info_hash.array());
+
+		// System.out.println("Our SHA-1: " + our_SHA + " , Peer's SHA-1: " +
+		// response_SHA);
+		if (!response_SHA.equals(our_SHA)) {
+			System.out.println("ERROR: info_hash incorrect.");
+			return;
+			// throw an exception.
+		} else {
+			// System.out.println("Handshake successful, SHA-1 Hash
+			// confirmed.");
+		}
+
+		byte[] temp = new byte[9];
+		byte[] temp2 = new byte[4];
+		int tries = 1000;
+		boolean requesting = false;
+		int y;
+
+		//In this chunk of code we send a have message for each piece that we have downloaded
+		temp2 = RUBTClient.setHex(temp2, 5);
+		for(y=0; y<4; y++)
+			temp[x] = temp2[x];
+		temp2[4] = (byte)5;
+		for(x=0; x<RUBTClient.pieces.length; x++){
+			if(RUBTClient.pieces[x] == 1){
+				temp2 = RUBTClient.setHex(temp2, x);
+				for(y=0; y<4; y++)
+					temp[5+y] = temp2[y];
+				try {
+					peerOutput.write(temp);
+				} catch (SocketException s) {
+					System.out.println("The connection is closed."); // FLAG
+				}
+			}
+		}
+
+		while (peerInput.available() != 0 || tries > 0) {
+			try {
+				peerLine[0] = peerInput.readByte();
+			} catch (EOFException e) {
+				tries--;
+				continue;
+			}
+
+			x = 0;
+			if (peerLine[0] >= 0) {
+				temp2[0] = peerLine[0];
+				temp2[1] = peerInput.readByte();
+				temp2[2] = peerInput.readByte();
+				temp2[3] = peerInput.readByte();
+				x = RUBTClient.parseHex(temp2);
+			}
+
+			if(x > 0){
+				peerLine = new byte[x];
+				tries = 1000;
+				for (x = 0; x < peerLine.length; x++) { // here we read in the actual message
+					peerLine[x] = peerInput.readByte();
+				}
+				message = RUBTClient.parseMessage(peerLine);
+
+				if (message == "interested") {
+					peerOutput.write(RUBTClient.UNCHOKE);
+					requesting = true;
+				}
+
+				if(message == "request"){
+					//write piece message into temp
+					//send temp
+				}
+			}
+		}
+
+		return;
 	}
-}
+}//End of UPLOADER class
 
 
 /**
@@ -427,6 +548,10 @@ public class RUBTClient {
 		public Terminator(){
 			
 		}
+<<<<<<< HEAD
+		@SuppressWarnings("deprecation")
+=======
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 		public void run() {
 			while(true){
 				String input = inputReader.next();
@@ -434,7 +559,45 @@ public class RUBTClient {
 					System.out.println("Program terminated by user input");
 					System.exit(0);
 				}
+<<<<<<< HEAD
+				else if(input.equals("2")){ // Pause every thread
+					for(int i = 0; i < RUBTClient.dThreads.length; i++){
+						if(dThreads[i].isAlive()) dThreads[i].suspend();
+					}
+					
+					/*for(int i = 0; i < RUBTClient.uThreads.length; i++){
+						if(uThreads[i].isAlive()) uThreads[i].suspend();
+					}*/
+					System.out.println("Program paused. Press 1 to quit, 2 to resume.");
+					while(true){
+						String input2 = inputReader.next();
+						if(input2.equals("1")){ // quit
+							System.out.println("Program terminated by user input");
+							System.exit(0);
+						}
+						else if(input2.equals("2")){ // unpause
+							for(int i = 0; i < RUBTClient.dThreads.length; i++){
+								if(dThreads[i].isAlive())
+									dThreads[i].resume();
+							}
+							
+							/*for(int i = 0; i < RUBTClient.uThreads.length; i++){
+								if(uThreads[i].isAlive())
+									uThreads[i].resume();
+							}*/
+							break; // Get out of pause loop
+						}
+						else{
+							System.out.println("That is not a valid input. Input 1 to quit, 2 to unpause.");
+						}
+					}
+				}
+				else{
+					System.out.println("That is not a valid input. Input 1 to quit, 2 to pause.");
+				}
+=======
 				
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				
 			}
 
@@ -467,6 +630,12 @@ public class RUBTClient {
 	public static ArrayList pieceList;
 	public static int numActiveThreads; // Tracks how many threads are still
 										// alive
+<<<<<<< HEAD
+	// Store all uploader and downloader threads
+	protected static Downloader[] dThreads;
+	protected static Uploader[] uThreads;
+=======
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 
 	/**
 	 *
@@ -561,9 +730,14 @@ public class RUBTClient {
 		x = pieces.length - remaining;
 		System.out.println("Finished: Downloaded: " + x + " / " + pieces.length);
 		System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
+<<<<<<< HEAD
 		System.out.println();
 		System.exit(0);
 		return;
+=======
+
+		System.exit(0); // Exit program, because download is complete
+>>>>>>> 3248a0fb5336ca19f7c01ee1c0968c5dc55224a6
 	}
 
 	/*
@@ -900,15 +1074,26 @@ public class RUBTClient {
 
 		numActiveThreads = 0; // initialize
 
+<<<<<<< HEAD
+		dThreads = new Downloader[p_list.size()]; // Store the threads!
+		
+		for (int i = 0; i < p_list.size(); i++) {
+			// CREATE THREAD TO DOWNLOAD, AND MAKE UPLOADERS NEXT
+=======
 		Downloader[] threads = new Downloader[p_list.size()]; // Store the
 																// threads!
 		for (int i = 0; i < p_list.size(); i++) {
 			// CREATE THREAD TO DOWNLOAD
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 			Downloader d = new Downloader(p_list.get(i), info, b);
 			numActiveThreads++; // One active right now
 			downloads.add(d);
 			d.start(); // Run the thread and download the Rick Roll
+<<<<<<< HEAD
+			dThreads[i] = d; // Add em to list
+=======
 			threads[i] = d; // Add em to list
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 
 			if (numActiveThreads <= 0) {
 				System.out.println("Error: no active threads");
@@ -931,17 +1116,30 @@ public class RUBTClient {
 				break;
 			if (remaining <= 0)
 				break;
+<<<<<<< HEAD
+			if ((System.currentTimeMillis() - checkpoint) >= 120000) {
+=======
 			if ((System.currentTimeMillis() - checkpoint) >= 30000) {
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
 				checkpoint = System.currentTimeMillis();
 			}
 			// System.out.println("In While. numActiveThreads = " +
 			// numActiveThreads);
+<<<<<<< HEAD
+		} 
+		// FLAG loop
+
+		for (int i = 0; i < p_list.size(); i++) {
+			if (dThreads[i].isAlive()) {
+				dThreads[i].stop();
+=======
 		} // FLAG loop
 
 		for (int i = 0; i < p_list.size(); i++) {
 			if (threads[i].isAlive()) {
 				threads[i].stop();
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				numActiveThreads--;
 			}
 		}
@@ -1119,6 +1317,57 @@ public class RUBTClient {
 		// (4-byte length prefix, message id, 4-byte index, 4-byte begin, 4-byte
 		// piece length)
 
+	}
+
+	/*
+	 * This method takes a request message as an input.
+	 *  If we have the piece, it returns the corresponding piece message.
+	 * 
+	 * @author Mehul
+	 */
+	public static byte[] givePiece(byte[] input){
+		int x, pos, length, size, begin;
+		byte[] ret, block, hexbytes;
+
+		hexbytes = new byte[4];
+
+		//Here we extract the index of the piece requested
+		for(x=0; x<4; x++)
+			hexbytes[x] = input[x+1];
+		pos = parseHex(hexbytes);
+
+		if(pieces[pos] != 1)//If we don't have the piece return null
+			return null;
+
+		size = piece_length;
+		if (x == pieces.length - 1)
+			size = last_piece;
+		length = 9+size;
+
+		//We retrieve the block of data
+		block = pieceList.get(pos);
+		//We instantiate the return array, with 4 extra bytes for the length-prefix
+		ret = new byte[4+length];
+
+		hex_bytes = setHex(hex_bytes, length);// length-prefix
+		for(x=0; x<4; x++)
+			ret[x] = hexbytes[x];
+
+		ret[4] = (btye)7;
+
+		hex_bytes = setHex(hex_bytes, pos);// index
+		for(x=0; x<4; x++)
+			ret[x+5] = hexbytes[x];
+
+		//Here we extract the begin position of the piece requested
+		for(x=0; x<4; x++)
+			ret[x+9] = input[x+5];
+
+		for(x=0; x<block.size; x++){
+			ret[x+13] = block[x];
+		}
+
+		return ret;
 	}
 
 	/*
@@ -1347,4 +1596,8 @@ public class RUBTClient {
 	}
 
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
