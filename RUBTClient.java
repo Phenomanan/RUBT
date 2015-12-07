@@ -405,7 +405,10 @@ public class RUBTClient {
 		public Terminator(){
 			
 		}
+<<<<<<< HEAD
 		@SuppressWarnings("deprecation")
+=======
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 		public void run() {
 			while(true){
 				String input = inputReader.next();
@@ -413,6 +416,7 @@ public class RUBTClient {
 					System.out.println("Program terminated by user input");
 					System.exit(0);
 				}
+<<<<<<< HEAD
 				else if(input.equals("2")){ // Pause every thread
 					for(int i = 0; i < RUBTClient.dThreads.length; i++){
 						if(dThreads[i].isAlive()) dThreads[i].suspend();
@@ -448,6 +452,9 @@ public class RUBTClient {
 				else{
 					System.out.println("That is not a valid input. Input 1 to quit, 2 to pause.");
 				}
+=======
+				
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				
 			}
 
@@ -480,9 +487,12 @@ public class RUBTClient {
 	public static ArrayList pieceList;
 	public static int numActiveThreads; // Tracks how many threads are still
 										// alive
+<<<<<<< HEAD
 	// Store all uploader and downloader threads
 	protected static Downloader[] dThreads;
 	protected static Uploader[] uThreads;
+=======
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 
 	/**
 	 *
@@ -914,15 +924,26 @@ public class RUBTClient {
 
 		numActiveThreads = 0; // initialize
 
+<<<<<<< HEAD
 		dThreads = new Downloader[p_list.size()]; // Store the threads!
 		
 		for (int i = 0; i < p_list.size(); i++) {
 			// CREATE THREAD TO DOWNLOAD, AND MAKE UPLOADERS NEXT
+=======
+		Downloader[] threads = new Downloader[p_list.size()]; // Store the
+																// threads!
+		for (int i = 0; i < p_list.size(); i++) {
+			// CREATE THREAD TO DOWNLOAD
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 			Downloader d = new Downloader(p_list.get(i), info, b);
 			numActiveThreads++; // One active right now
 			downloads.add(d);
 			d.start(); // Run the thread and download the Rick Roll
+<<<<<<< HEAD
 			dThreads[i] = d; // Add em to list
+=======
+			threads[i] = d; // Add em to list
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 
 			if (numActiveThreads <= 0) {
 				System.out.println("Error: no active threads");
@@ -945,18 +966,30 @@ public class RUBTClient {
 				break;
 			if (remaining <= 0)
 				break;
+<<<<<<< HEAD
 			if ((System.currentTimeMillis() - checkpoint) >= 120000) {
+=======
+			if ((System.currentTimeMillis() - checkpoint) >= 30000) {
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
 				checkpoint = System.currentTimeMillis();
 			}
 			// System.out.println("In While. numActiveThreads = " +
 			// numActiveThreads);
+<<<<<<< HEAD
 		} 
 		// FLAG loop
 
 		for (int i = 0; i < p_list.size(); i++) {
 			if (dThreads[i].isAlive()) {
 				dThreads[i].stop();
+=======
+		} // FLAG loop
+
+		for (int i = 0; i < p_list.size(); i++) {
+			if (threads[i].isAlive()) {
+				threads[i].stop();
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
 				numActiveThreads--;
 			}
 		}
@@ -1362,4 +1395,8 @@ public class RUBTClient {
 	}
 
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f9fff6d69fedce3a1f8f7c93e04994e2715a7685
