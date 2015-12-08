@@ -383,12 +383,32 @@ class Uploader extends Thread {
     }
     
     public void run() {
+		double current_ratio, numpieces;
+
+		//We won't upload until we meet the download ratio
+		numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
+		current_ratio = ((double)numpieces/((double)RUBTClient.pieces.length));
+		/*System.out.println("Current Ratio: " + current_ratio + "Given Ratio: " + 
+			RUBTClient.download_ratio); // FLAG*/
+		long checkpoint = System.currentTimeMillis();
+
+		while(current_ratio < RUBTClient.download_ratio){
+			numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
+			current_ratio = numpieces/(double)RUBTClient.pieces.length;
+			/**/if ((System.currentTimeMillis() - checkpoint) >= 30000){
+				System.out.println("Current Ratio: " + current_ratio + "Given Ratio: " + 						RUBTClient.download_ratio); // FLAG
+				checkpoint = System.currentTimeMillis();
+			}
+		}
+
         System.out.println("Uploading to peer: "+peer.peerID);
         try{
             upload();
         } catch(IOException e){
-            System.out.println("Upload failed");
+            System.out.println("Upload rejected.");
         }
+		System.out.println("Ending thread.");
+		RUBTClient.numActiveThreads--;
         return;
     }
     
@@ -406,7 +426,7 @@ class Uploader extends Thread {
         try {
             peerSocket = new Socket(peer.IP, peer.port); // Set peer socket
         } catch (IOException e) {
-            System.out.println("Could not instantiate peer socket.");
+            System.out.println("Could not instantiate peer socket to peer "+peer.peerID);
             throw e; // Throw the exception because program should not continue
             // if cannot connect
         }
@@ -456,28 +476,34 @@ class Uploader extends Thread {
         
         byte[] temp = new byte[9];
         byte[] temp2 = new byte[4];
-        int tries = 1000;
         boolean requesting = false;
         int y;
         
         //In this chunk of code we send a have message for each piece that we have downloaded
-        temp2 = RUBTClient.setHex(temp2, 5);
-        for(y=0; y<4; y++)
+        temp2 = RUBTClient.setHex(temp2, 5);//1st 4 bytes are the length-prefix
+        for(x=0; x<4; x++)
             temp[x] = temp2[x];
-        temp2[4] = (byte)5;
+        temp[4] = (byte)5;//5th byte is the message id
         for(x=0; x<RUBTClient.pieces.length; x++){
-            if(RUBTClient.pieces[x] == 1){
+            if(RUBTClient.pieces[x] == 1){//we rewrite the index for each piece
                 temp2 = RUBTClient.setHex(temp2, x);
-                for(y=0; y<4; y++)
+                for(y=0; y<4; y++)//last 4 bytes are the index
                     temp[5+y] = temp2[y];
                 try {
+					if(x==0){
+						for(int zed=0; zed<9; zed++)
+							System.out.print(temp[zed]+" ");
+						System.out.println();
+					}
                     peerOutput.write(temp);
                 } catch (SocketException s) {
                     System.out.println("The connection is closed."); // FLAG
                 }
             }
         }
-        
+        peerOutput.write(RUBTClient.UNINTERESTED);
+
+        int tries = 1000;
         while (peerInput.available() != 0 || tries > 0) {
             try {
                 peerLine[0] = peerInput.readByte();
@@ -502,15 +528,23 @@ class Uploader extends Thread {
                     peerLine[x] = peerInput.readByte();
                 }
                 message = RUBTClient.parseMessage(peerLine);
+				System.out.println("Got a message, type = "+message);
                 
                 if (message == "interested") {
+					System.out.println("Got an interested.");
                     peerOutput.write(RUBTClient.UNCHOKE);
                     requesting = true;
                 }
                 
                 if(message == "request"){
+					System.out.println("Got a request.");
                     //write piece message into temp
+					temp = RUBTClient.givePiece(peerLine);
                     //send temp
+					if(temp != null){
+						peerOutput.write(temp);
+						System.out.println("Sent a piece.");
+					}
                 }
             }
         }
@@ -570,7 +604,7 @@ public class RUBTClient {
             while(true){
                 String input = inputReader.next();
                 if(input.equals("1")){
-                    System.out.println("Program terminated by user input");
+                    System.out.println("Program terminated by user input.");
                     System.exit(0);
                 }
                 else if(input.equals("2")){ // Pause every thread
@@ -591,7 +625,7 @@ public class RUBTClient {
                     while(true){
                         String input2 = inputReader.next();
                         if(input2.equals("1")){ // quit
-                            System.out.println("Program terminated by user input");
+                            System.out.println("Program terminated by user input.");
                             System.exit(0);
                         }
                         else if(input2.equals("2")){ // unpause
@@ -631,7 +665,7 @@ public class RUBTClient {
     private static byte[] CHOKE = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0 };
     static byte[] UNCHOKE = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 1 };
     static byte[] INTERESTED = new byte[] { (byte) 00, (byte) 00, (byte) 00, (byte) 01, (byte) 2 };
-    private static byte[] UNINTERESTED = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 3 };
+    static byte[] UNINTERESTED = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 3 };
     
     @SuppressWarnings("unused")
     private static Socket peerSocket; // Socket that connects to peer
@@ -651,6 +685,7 @@ public class RUBTClient {
     // Store all uploader and downloader threads
     protected static Downloader[] dThreads;
     protected static Uploader[] uThreads;
+	public static double download_ratio;
     
     /**
      *
@@ -670,7 +705,15 @@ public class RUBTClient {
         
         System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time");
         Thread.sleep(3000);
-        
+
+		System.out.println("How much should be downloaded before uploading? ");
+		System.out.print("(Enter a ratio from 0.0 to 1.0)");
+		Scanner userinput = new Scanner(System.in);
+        download_ratio = userinput.nextDouble();
+		if(download_ratio < 0.0 || download_ratio > 1.0){
+			System.out.println("Invalid input: using the default ratio (.25)");
+			download_ratio = 0.25;
+		}
         
         //******************//
         //the next three lines of code should wait for a user input while the rest of the program is running
@@ -743,12 +786,24 @@ public class RUBTClient {
         sfile_stream.close();
         
         x = pieces.length - remaining;
-        System.out.println("Finished: Downloaded: " + x + " / " + pieces.length);
+        System.out.println("Finished downloading: Downloaded: " + x + " / " + pieces.length);
         System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
         System.out.println();
-        
-        System.exit(0); // Exit program, because download is complete
-    }
+
+		System.out.println("Uploading will continue.");
+        System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time");
+		startTime = System.currentTimeMillis();
+		while(t.isAlive()){
+			if ((System.currentTimeMillis() - startTime) >= 30000) {
+				System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
+				System.out.println("Uploading will continue.");
+				System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time.");
+				System.out.println();
+				startTime = System.currentTimeMillis();
+			}
+		}
+       System.exit(0); // Exit program, because download is complete
+    }//END OF MAIN
     
     /*
      * NOTE: byte[] input MUST be a 4-length byte[] this method encodes the int
@@ -1095,6 +1150,12 @@ public class RUBTClient {
             downloads.add(d);
             d.start(); // Run the thread and download the Rick Roll
             dThreads[i] = d; // Add em to list
+
+			//We will also create the uploader threads here, we will use them later
+			Uploader u = new Uploader(p_list.get(i), info, b);
+			u.start();
+			numActiveThreads++;
+			uThreads[i] = u;
             
             if (numActiveThreads <= 0) {
                 System.out.println("Error: no active threads");
@@ -1133,13 +1194,13 @@ public class RUBTClient {
             }
         } // FLAG loop
         
-        for (int i = 0; i < uThreads.length; i++) {
+       /* for (int i = 0; i < uThreads.length; i++) {
             if(uThreads[0] == null); // Skip if null
             else if (uThreads[i].isAlive()) {
                 uThreads[i].stop();
                 numActiveThreads--;
             }
-        }
+        }*/
         
         System.out.println("Out of main loop; NumActiveThreads: " + numActiveThreads); // Flag
         return;
