@@ -86,7 +86,7 @@ class Downloader extends Thread {
                 try {
                     TimeUnit.SECONDS.sleep(120);// Wait 1 interval time
                 } catch (InterruptedException e) {
-                	System.err.println("2 minute waiting period was interrupted.");
+                    System.err.println("2 minute waiting period was interrupted.");
                 }
             }
         }
@@ -187,7 +187,7 @@ class Downloader extends Thread {
                     peerOutput.write(temp);
                 } catch (SocketException s) {
                     //System.out.println("The connection is closed."); // FLAG
-                	// Will print 200 times, so don't print!
+                    // Will print 200 times, so don't print!
                 }
                 tries--;
                 // System.out.println("Failed to read."); // FLAG
@@ -383,37 +383,37 @@ class Uploader extends Thread {
     }
     
     public void run() {
-		/*double current_ratio, numpieces;
-		//We won't upload until we meet the download ratio
-		numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
-		current_ratio = ((double)numpieces/((double)RUBTClient.pieces.length));
-		System.out.println("Current Ratio: " + current_ratio + "  Given Ratio: " + 
-			RUBTClient.download_ratio); // FLAG
-		
-		long checkpoint = System.currentTimeMillis();
-		long checkpoint2 = System.currentTimeMillis();
-    	System.out.println("Entering while() loop in upload()."); // UPLOADER FLAG
-		while(RUBTClient.remaining > 0){
-			numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
-			current_ratio = numpieces/(double)RUBTClient.pieces.length;
-			if ((System.currentTimeMillis() - checkpoint) >= 300000){
-				System.out.println("Current Ratio: " + current_ratio + "  Given Ratio: " + 						RUBTClient.download_ratio); // FLAG
-				checkpoint = System.currentTimeMillis();
-			}
-			if ((System.currentTimeMillis() - checkpoint2) >= 30000){
-				System.out.println("In while, remaining = " + RUBTClient.remaining ); // FLAG
-				checkpoint2 = System.currentTimeMillis();
-			}
-		}*/
-
+        /*double current_ratio, numpieces;
+         //We won't upload until we meet the download ratio
+         numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
+         current_ratio = ((double)numpieces/((double)RUBTClient.pieces.length));
+         System.out.println("Current Ratio: " + current_ratio + "  Given Ratio: " +
+         RUBTClient.download_ratio); // FLAG
+         
+         long checkpoint = System.currentTimeMillis();
+         long checkpoint2 = System.currentTimeMillis();
+         System.out.println("Entering while() loop in upload()."); // UPLOADER FLAG
+         while(RUBTClient.remaining > 0){
+         numpieces = ((double)RUBTClient.pieces.length - (double)RUBTClient.remaining);
+         current_ratio = numpieces/(double)RUBTClient.pieces.length;
+         if ((System.currentTimeMillis() - checkpoint) >= 300000){
+         System.out.println("Current Ratio: " + current_ratio + "  Given Ratio: " + 						RUBTClient.download_ratio); // FLAG
+         checkpoint = System.currentTimeMillis();
+         }
+         if ((System.currentTimeMillis() - checkpoint2) >= 30000){
+         System.out.println("In while, remaining = " + RUBTClient.remaining ); // FLAG
+         checkpoint2 = System.currentTimeMillis();
+         }
+         }*/
+        
         System.out.println("Uploading to peer: "+peer.peerID);
         try{
             upload();
         } catch(IOException e){
             System.err.println("Upload rejected.");
         }
-		System.out.println("Stopped uploader.");
-		RUBTClient.numActiveThreads--;
+        System.out.println("Stopped uploader.");
+        RUBTClient.numActiveThreads--;
         return;
     }
     
@@ -495,10 +495,10 @@ class Uploader extends Thread {
                 for(y=0; y<4; y++)//last 4 bytes are the index
                     temp[5+y] = temp2[y];
                 try {
-					/*if(x==0){ // Print have flag
-						for(int zed=0; zed<9; zed++) System.out.print(temp[zed]+" ");
-						System.out.println();
-					}*/
+                    /*if(x==0){ // Print have flag
+                     for(int zed=0; zed<9; zed++) System.out.print(temp[zed]+" ");
+                     System.out.println();
+                     }*/
                     peerOutput.write(temp);
                 } catch (SocketException s) {
                     System.err.println("The connection is closed. Stopping uploader."); // FLAG
@@ -507,7 +507,7 @@ class Uploader extends Thread {
             }
         }
         //peerOutput.write(RUBTClient.UNINTERESTED);
-
+        
         int tries = 200;
         while (peerInput.available() != 0 || tries > 0) {
             try {
@@ -528,8 +528,8 @@ class Uploader extends Thread {
             }
             
             if(x <= 0){
-            	tries--;
-            	continue;
+                tries--;
+                continue;
             }
             else if(x > 0){
                 peerLine = new byte[x];
@@ -538,40 +538,40 @@ class Uploader extends Thread {
                     peerLine[x] = peerInput.readByte();
                 }
                 message = RUBTClient.parseMessage(peerLine);
-				System.out.println("Got a message, type = "+message);
+                System.out.println("Got a message, type = "+message);
                 
                 if (message.equals("interested")) {
-					System.out.println("Got an interested.");
+                    System.out.println("Got an interested.");
                     peerOutput.write(RUBTClient.UNCHOKE);
                     requesting = true;
                 }
                 
                 else if(message == "request"){
-					System.out.println("Got a request.");
+                    System.out.println("Got a request.");
                     //write piece message into temp
-					temp = RUBTClient.givePiece(peerLine);
+                    temp = RUBTClient.givePiece(peerLine);
                     //send temp
-					if(temp != null){
-						peerOutput.write(temp);
-						System.out.println("Sent a piece.");
-					}
+                    if(temp != null){
+                        peerOutput.write(temp);
+                        System.out.println("Sent a piece.");
+                    }
                 }
                 else if(message == "bitfield"){
-                	/*System.out.println(message); // Print bitfield FLAG
-                    int i, j, k, temp1;
-                    
-                    k = 0;
-                    // the first byte of the array is the message code
-                    for (i = 1; i < peerLine.length; i++){
-                        for (j = 7; j >= 0; j--) {
-                            if (k >= RUBTClient.pieces.length)
-                                return;
-                            temp1 = ((peerLine[i]) >> j) & 1;
-                            System.out.println(k+": "+temp1);
-                            k++;
-                        }
-                        //return;
-                    }*/
+                    /*System.out.println(message); // Print bitfield FLAG
+                     int i, j, k, temp1;
+                     
+                     k = 0;
+                     // the first byte of the array is the message code
+                     for (i = 1; i < peerLine.length; i++){
+                     for (j = 7; j >= 0; j--) {
+                     if (k >= RUBTClient.pieces.length)
+                     return;
+                     temp1 = ((peerLine[i]) >> j) & 1;
+                     System.out.println(k+": "+temp1);
+                     k++;
+                     }
+                     //return;
+                     }*/
                 }
             }
         }
@@ -601,16 +601,45 @@ class Message {
  *tracker class to keep track of the connection in order to publish information to it.
  *@author Chris
  */
-class Tracker extends Thread{
+/**
+ * tracker class to keep track of the connection in order to publish information
+ * from it.
+ *
+ * @author Chris
+ */
+class Tracker extends Thread {
     
-    public DataInputStream tracker_input = null;
-    public DataOutputStream tracker_output = null;
     public URL scrape = null;
+    public int min_interval;
+    public int interval;
     
-    public Tracker(){
+    public Tracker(URL scrape, int min_interval, int interval) throws IOException, InterruptedException {
+        this.scrape = scrape;
+        this.min_interval = min_interval;
+        this.interval = interval;
         
+      
+            HttpURLConnection connection = (HttpURLConnection) this.scrape.openConnection();
+            connection.setDoInput(true);
+            
+            connection.setRequestMethod("GET");
+            
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+            
         
+            
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            inputLine = response.toString();
+            System.out.println(response.toString());
     }
+    
+            
+        
+    
 }
 
 public class RUBTClient {
@@ -647,7 +676,7 @@ public class RUBTClient {
                             else if(uThreads[i].isAlive()) uThreads[i].suspend();
                         }
                     } catch(NullPointerException e){
-                    	System.err.println("Going out of bounds in Uploader array.");
+                        System.err.println("Going out of bounds in Uploader array.");
                         e.printStackTrace();
                     }
                     System.out.println("Program paused. Press 1 to quit, 2 to resume.");
@@ -702,7 +731,7 @@ public class RUBTClient {
     public static int Min_Interval = 0;
     public static int Interval = 0;
     public static URL announceURL;
-    public static ByteBuffer infohash; 
+    public static ByteBuffer infohash;
     
     public static File sfile;
     public static FileOutputStream sfile_stream;
@@ -719,7 +748,7 @@ public class RUBTClient {
     // Store all uploader and downloader threads
     protected static Downloader[] dThreads;
     protected static Uploader[] uThreads;
-	public static double download_ratio;
+    public static double download_ratio;
     
     /**
      *
@@ -729,6 +758,7 @@ public class RUBTClient {
      * @throws IOException
      * @author Mehul, Manan
      */
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws BencodingException, IOException, InterruptedException {
         
         if (args.length != 2) {
@@ -739,7 +769,7 @@ public class RUBTClient {
         
         System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time");
         Thread.sleep(2000);
-
+        
         download_ratio = 1.0;
         
         //******************//
@@ -816,42 +846,42 @@ public class RUBTClient {
         System.out.println("Finished downloading: Downloaded: " + x + " / " + pieces.length);
         System.out.println("Total download time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
         System.out.println();
-
-		System.out.println("Uploading will continue.");
-		for(int i = 0; i < uThreads.length; i++){
-			uThreads[i].start(); // Start all uploaders
-			if(uThreads[i].isAlive()) numActiveThreads++; // Track uploaders
-		}
-		
+        
+        System.out.println("Uploading will continue.");
+        for(int i = 0; i < uThreads.length; i++){
+            uThreads[i].start(); // Start all uploaders
+            if(uThreads[i].isAlive()) numActiveThreads++; // Track uploaders
+        }
+        
         System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time");
-		startTime = System.currentTimeMillis();
-		while(t.isAlive()){
-			if ((System.currentTimeMillis() - startTime) >= 15000) {
-				startTime = System.currentTimeMillis(); // reset start time
-				System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
-				//System.out.println("Uploading will continue.");
-				if(numActiveThreads > 1) System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time.");
-				if(numActiveThreads <= 1){
-					break;
-				}
-				for(int i = 0; i < uThreads.length; i++){
-					if(uThreads[i].isAlive()){
-						System.out.println("Uploader #" + i + " is running.");
-					}
-				}
-				for(int i = 0; i < dThreads.length; i++){
-					if(dThreads[i].isAlive()){
-						//System.out.println("Downloader #" + i + " is running.");
-						dThreads[i].stop();
-						//numActiveThreads--;
-					}
-				}
-
-				System.out.println();
-			}
-		}
-		System.out.println("All threads ended, exiting program.");
-       System.exit(0); // Exit program, because download is complete
+        startTime = System.currentTimeMillis();
+        while(t.isAlive()){
+            if ((System.currentTimeMillis() - startTime) >= 15000) {
+                startTime = System.currentTimeMillis(); // reset start time
+                System.out.printf("****CHECKPOINT  NumActiveThreads: %d ****%n", numActiveThreads);
+                //System.out.println("Uploading will continue.");
+                if(numActiveThreads > 1) System.out.println("Enter 1 to exit the program at any time, and 2 to pause the thread at any time.");
+                if(numActiveThreads <= 1){
+                    break;
+                }
+                for(int i = 0; i < uThreads.length; i++){
+                    if(uThreads[i].isAlive()){
+                        System.out.println("Uploader #" + i + " is running.");
+                    }
+                }
+                for(int i = 0; i < dThreads.length; i++){
+                    if(dThreads[i].isAlive()){
+                        //System.out.println("Downloader #" + i + " is running.");
+                        dThreads[i].stop();
+                        //numActiveThreads--;
+                    }
+                }
+                
+                System.out.println();
+            }
+        }
+        System.out.println("All threads ended, exiting program.");
+        System.exit(0); // Exit program, because download is complete
     }//END OF MAIN
     
     /*
@@ -1091,7 +1121,8 @@ public class RUBTClient {
         BufferedReader reader;
         int x;
         Random rand;
-        
+        announceURL = info.announce_url;
+        infohash = info.info_hash;
         link = info.announce_url;
         
         announceURL = info.announce_url;
@@ -1139,21 +1170,19 @@ public class RUBTClient {
         link2 = new URL(link, message);
         conn = (HttpURLConnection) link2.openConnection();
         conn.setRequestMethod("GET");
-        Tracker tracker = new Tracker();
-        
+        DataInputStream tracker_input = null;
         
         try {
-            tracker.tracker_input = new DataInputStream(conn.getInputStream());
+            tracker_input = new DataInputStream(conn.getInputStream());
         } catch (IOException e) {
             System.err.println("ERROR: problem opening up input stream to tracker");
         }
         
         byte[] tracker_response_in_bytes = new byte[conn.getContentLength()];
         
-        tracker.tracker_input.read(tracker_response_in_bytes);
+        tracker_input.read(tracker_response_in_bytes);
         
-        tracker.tracker_input.close();
-        //tracker.tracker_output.close();
+        tracker_input.close();
         
         Object Obj = null;
         Obj = DecodeResponse(tracker_response_in_bytes);
@@ -1163,6 +1192,15 @@ public class RUBTClient {
         // ToolKit.print(response);
         // System.out.println();
         getInterval(response);
+        System.out.println(announceURL.toString());
+        try {
+            System.out.println(scrapeURL(announceURL));
+            Tracker tracker = new Tracker(scrapeURL(announceURL), Min_Interval, Interval);
+        } catch (InterruptedException e) {
+            System.out.println("Error creating tracker object");
+            e.printStackTrace();
+        }
+        
         
         Object[] keys = null;
         keys = response.keySet().toArray();
@@ -1203,25 +1241,25 @@ public class RUBTClient {
             d.start(); // Run the thread and download the Rick Roll
             if(d.isAlive()) numActiveThreads++; // One active right now
             dThreads[i] = d; // Add em to list
-
-			//We will also create the uploader threads here, we will use them later
-			Uploader u = new Uploader(p_list.get(i), info, b);
-			uThreads[i] = u; // Add to uThreads
+            
+            //We will also create the uploader threads here, we will use them later
+            Uploader u = new Uploader(p_list.get(i), info, b);
+            uThreads[i] = u; // Add to uThreads
             
             if (numActiveThreads <= 0) {
                 System.out.println("Error: no active threads");
                 return;
             }
             /*if (!d.isAlive()) {
-                System.out.println("one of the downloads dropped");
-                numActiveThreads--;
-                break;
-            }
-            if (!u.isAlive()) {
-                System.out.println("one of the downloads dropped");
-                numActiveThreads--;
-                break;
-            }*/
+             System.out.println("one of the downloads dropped");
+             numActiveThreads--;
+             break;
+             }
+             if (!u.isAlive()) {
+             System.out.println("one of the downloads dropped");
+             numActiveThreads--;
+             break;
+             }*/
             // System.out.print("NumActiveThreads: " + numActiveThreads); //
         }
         
@@ -1248,7 +1286,7 @@ public class RUBTClient {
                 numActiveThreads--; // Decrement after delete
                 System.out.println("Stopped downloader #" + i); // FLAG
             }
-        } // FLAG loop 
+        } // FLAG loop
         System.out.println("Out of main loop; NumActiveThreads: " + numActiveThreads); // Flag
         return;
         
@@ -1428,7 +1466,7 @@ public class RUBTClient {
     /*
      * This method takes a request message as an input.
      *  If we have the piece, it returns the corresponding piece message.
-     * 
+     *
      * @author Mehul
      */
     @SuppressWarnings("unused")
@@ -1481,7 +1519,7 @@ public class RUBTClient {
     /*
      * This method parses the byte array sent by the peer to determine what kind
      * of message has been sent.
-     * 
+     *
      * @author Mehul
      */
     public static String parseMessage(byte[] input) {
@@ -1506,73 +1544,72 @@ public class RUBTClient {
         return "unknown";
     }
     
-/** @author Chris
-  * Method that extracts the min and regular intervals from the trackers response. 
-  */
-    public static  void getInterval(HashMap<ByteBuffer,Object> tracker_response){
-    	ByteBuffer min_interval = ByteBuffer.wrap(new byte[] {'m', 'i','n',' ','i','n','t','e','r','v','a','l'});
-    	ByteBuffer interval = ByteBuffer.wrap(new byte[] {'i', 'n', 't', 'e', 'r', 'v', 'a', 'l' });
- 	
-    	if(tracker_response.containsKey(interval)){
-    		Interval = (Integer) tracker_response.get(interval);
-    	}else{
-    		System.out.println("problem with obtaining information about tracker intervals");
-    		}
-    	if(tracker_response.containsKey(min_interval)){
-    		Min_Interval = (Integer) tracker_response.get(min_interval);
-    	}else{
-    		System.out.println("no min interval");
-    		Min_Interval = (int) (.5*Interval);
-    		}
+    /**
+     * @author Chris Method that extracts the min and regular intervals from the
+     *         trackers response.
+     */
+    public static void getInterval(HashMap<ByteBuffer, Object> tracker_response) {
+        ByteBuffer min_interval = ByteBuffer
+        .wrap(new byte[] { 'm', 'i', 'n', ' ', 'i', 'n', 't', 'e', 'r', 'v', 'a', 'l' });
+        ByteBuffer interval = ByteBuffer.wrap(new byte[] { 'i', 'n', 't', 'e', 'r', 'v', 'a', 'l' });
+        
+        if (tracker_response.containsKey(interval)) {
+            Interval = (Integer) tracker_response.get(interval);
+        } else {
+            System.out.println("problem with obtaining information about tracker intervals");
+        }
+        if (tracker_response.containsKey(min_interval)) {
+            Min_Interval = (Integer) tracker_response.get(min_interval);
+        } else {
+            System.out.println("no min interval");
+            Min_Interval = (int) (.5 * Interval);
+        }
     }
     
-/**
-  * This method takes the announce URL provided by the tracker and turns it into to the scrape URL
-  * @author Chris
-  * @param URL
-  * @return URL
-  */
+    /**
+     * This method takes the announce URL provided by the tracker and turns it
+     * into to the scrape URL
+     *
+     * @author Chris
+     * @param URL
+     * @return URL
+     */
     @SuppressWarnings("unused")
-    public static URL scrapeURL(URL announce){
-    	URL scrape_url = null;
-    	String temp = announce.toString();
-    	String is_announce = null;
-    	String scrape = null;
-
-    	int place_holder = 0;
-    	char is_slash = ' ';
-    	for(int i = 0; i < temp.length(); i++){
-    		is_slash = temp.charAt(i);
-    		if(is_slash == '/'){
-    			place_holder = i;
-    		}
-    	}
-    	scrape = temp.substring(place_holder);	
-        	
-    	//after the last slash is located in the announce url we need to see if the tracker supports scraping
-    	if(scrape.length() < 8){ //doesn't support scraping via not enough characters left to spell announce
-    		return null;
-    	}
-    	else if(!scrape.substring(0, 8).equals("announce")){//no scraping since the next 8 letters aren't "announce"
-    		return null;
-    	}else{ //supports scraping 
-    		scrape = temp.replaceAll("announce", "scrape");
-    	}
-    	
-    	//create new URL by replacing announce with scrape. 
-    	try {
-    		scrape_url = new URL(scrape);
-    	} catch (MalformedURLException e) {
-    			System.out.println("error creating scrape URL");
-    			e.printStackTrace();
-    	  }
-    	return scrape_url;
-    }    
+    public static URL scrapeURL(URL announce) {
+        URL scrape_url = null;
+        String temp = announce.toString();
+        String is_announce = null;
+        String scrape = null;
+        
+        int place_holder = 0;
+        char is_slash = ' ';
+        for (int i = 0; i < temp.length(); i++) {
+            is_slash = temp.charAt(i);
+            if (is_slash == '/') {
+                place_holder = i;
+            }
+        }
+        scrape = temp.substring(place_holder + 1);
+      
+        
+        scrape = announce.toString().replaceAll("announce", "scrape");
+        System.out.println(scrape);
+        
+        // create new URL by replacing announce with scrape.
+        try {
+            scrape_url = new URL(scrape);
+        } catch (MalformedURLException e) {
+            System.out.println("error creating scrape URL");
+            e.printStackTrace();
+        }
+        System.out.println(scrape_url.toString());
+        return scrape_url;
+    }
     
     
     /**
      * this method creates the handshake that is initially sent to the peer.
-     * 
+     *
      * @param byte[]
      *            info hash, byte[] peer_id
      * @return byte[]
@@ -1623,7 +1660,7 @@ public class RUBTClient {
      * statement has a loop that converts the length_prefix into a byte array
      * that represents the length then I fill the return message byte[] with
      * those bytes.
-     * 
+     *
      * @param int
      *            length_prefix, int messageID
      * @author Chris
@@ -1682,7 +1719,7 @@ public class RUBTClient {
      * tracker response and locates correct peer ID that we're looking for (in
      * this case RU1103) then it creates a peer object <int port,String IP> and
      * returns the peer object.
-     * 
+     *
      * @param abstract
      *            list
      * @return Peer object
@@ -1725,7 +1762,7 @@ public class RUBTClient {
     
     /**
      * converts a byte[] into an integer
-     * 
+     *
      * @author Chris
      * @param byte[]
      * @return int
@@ -1740,7 +1777,7 @@ public class RUBTClient {
      * This method uses the Bencoder2.decode() method to turn a byte[] into an
      * object that has the decoded information for extracting the peer
      * information.
-     * 
+     *
      * @author Chris
      * @param byte[]
      * @return Object
@@ -1757,7 +1794,5 @@ public class RUBTClient {
         }
         return obj;
     }
-
-    
     
 }
