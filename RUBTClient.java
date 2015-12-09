@@ -411,16 +411,29 @@ class Uploader extends Thread {
          checkpoint2 = System.currentTimeMillis();
          }
          }*/
-        
-        System.out.println("Uploading to peer: "+peer.peerID);
-        try{
-            upload();
-        } catch(IOException e){
-            System.err.println("Upload rejected.");
-        }
-        System.out.println("Stopped uploader.");
+    	long startTime = System.currentTimeMillis();
+    	System.out.println("Uploading to peer: "+peer.peerID);
+		// Upload once before wait
+    	try{
+			upload();
+		} catch(IOException e){
+			System.err.println("Upload rejected.");
+		}
+    	// Loop, wait 2 minutes and upload
+    	while(true){
+    		if(startTime - System.currentTimeMillis() == 120000){ // Try to reconnect every 2 minutes. ONLY end on user input
+    			System.out.println("Uploading to peer: "+peer.peerID);
+    			try{
+    				upload();
+    			} catch(IOException e){
+    				System.err.println("Upload rejected.");
+    			}
+    			startTime = System.currentTimeMillis(); // Set start to now, and wait another 2
+    		}
+    	}
+    	/*System.out.println("Stopped uploader.");
         RUBTClient.numActiveThreads--;
-        return;
+        return;*/
     }
     
     /*
@@ -544,7 +557,7 @@ class Uploader extends Thread {
                     peerLine[x] = peerInput.readByte();
                 }
                 message = RUBTClient.parseMessage(peerLine);
-                System.out.println("Got a message, type = "+message);
+                //System.out.println("Got a message, type = "+message);
                 
                 if (message.equals("interested")) {
                     System.out.println("Got an interested.");
@@ -870,7 +883,9 @@ public class RUBTClient {
                 if(numActiveThreads <= 1){
                     break;
                 }
-                for(int i = 0; i < uThreads.length; i++){
+                System.out.println(uThreads.length + " upload threads are running.");
+                
+                /*for(int i = 0; i < uThreads.length; i++){
                     if(uThreads[i].isAlive()){
                         System.out.println("Uploader #" + i + " is running.");
                     }
@@ -881,7 +896,7 @@ public class RUBTClient {
                         dThreads[i].stop();
                         //numActiveThreads--;
                     }
-                }
+                }*/
                 
                 System.out.println();
             }
