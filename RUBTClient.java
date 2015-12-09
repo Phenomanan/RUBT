@@ -76,6 +76,12 @@ class Downloader extends Thread {
                 System.err.println("Thread download failed." + e1); // FLAG
                 // e1.printStackTrace();
             }
+            if(this.available.cardinality() <= 0){
+            	System.out.println("No pieces available for download. Stopping thread.");
+            	break;
+            }
+            
+            
             x++;
             if (RUBTClient.pieces[RUBTClient.pieces.length - 1] == 2 && !retry) {
                 if ((RUBTClient.remaining <= 0))
@@ -91,7 +97,7 @@ class Downloader extends Thread {
             }
         }
         
-        System.out.println(" Pieces left: "+RUBTClient.remaining);
+        //System.out.println(" Pieces left: "+RUBTClient.remaining);
         RUBTClient.numActiveThreads--;
         System.out.print("Downloader finished. Threads active: " + RUBTClient.numActiveThreads);
         System.out.println(" Pieces left: " + RUBTClient.remaining);
@@ -506,15 +512,15 @@ class Uploader extends Thread {
                 }
             }
         }
-        //peerOutput.write(RUBTClient.UNINTERESTED);
+        //peerOutput.write(RUBTClient.UNINTERESTED); // Don't want to get HAVEs
         
-        int tries = 200;
-        while (peerInput.available() != 0 || tries > 0) {
+        //int tries = 10000;
+        while (/*peerInput.available() != 0 || tries > 0*/ true) {
             try {
                 peerLine[0] = peerInput.readByte();
                 //System.out.println("peerLine[0] = " + peerLine[0]); // PRINT BYTE FLAG
             } catch (EOFException e) {
-                tries--;
+                //tries--;
                 continue;
             }
             
@@ -528,12 +534,12 @@ class Uploader extends Thread {
             }
             
             if(x <= 0){
-                tries--;
+                //tries--;
                 continue;
             }
             else if(x > 0){
                 peerLine = new byte[x];
-                tries = 200;
+                //tries = 10000;
                 for (x = 0; x < peerLine.length; x++) { // here we read in the actual message
                     peerLine[x] = peerInput.readByte();
                 }
@@ -576,7 +582,7 @@ class Uploader extends Thread {
             }
         }
         
-        return;
+        //return;
     }
 }//End of UPLOADER class
 
